@@ -14,6 +14,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Add this configuration to disable static generation for authenticated pages
+  exportPathMap: async (defaultPathMap, { dev, dir, outDir, distDir, buildId }) => ({
+    ...defaultPathMap,
+    "/dashboard": { page: "/dashboard", _isDynamicRoute: true },
+    "/profile": { page: "/profile", _isDynamicRoute: true },
+    "/upload": { page: "/upload", _isDynamicRoute: true },
+    "/settings": { page: "/settings", _isDynamicRoute: true },
+  }),
 }
 
 module.exports = nextConfig
