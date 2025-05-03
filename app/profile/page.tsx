@@ -1,14 +1,17 @@
 "use client"
 
-import type React from "react"
+// הגדרת הדף כדינמי ישירות בקובץ
+export const dynamic = "force-dynamic"
 
-import { useState } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { User, Mail, Lock } from "lucide-react"
+import { User, Mail, Lock, Loader2 } from "lucide-react"
 import {
   NeomorphCard,
   NeomorphCardHeader,
@@ -23,7 +26,9 @@ import { NeomorphToggle } from "@/components/neomorphism/toggle"
 import { RevealOnScroll } from "@/components/parallax-effect"
 
 export default function ProfilePage() {
-  const { data: session } = useSession()
+  const router = useRouter()
+  const session = useSession()
+  const [isPageLoading, setIsPageLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
@@ -32,6 +37,15 @@ export default function ProfilePage() {
     marketing: false,
     updates: true,
   })
+
+  // Check authentication status
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.push("/login?callbackUrl=/profile")
+    } else if (session.status !== "loading") {
+      setIsPageLoading(false)
+    }
+  }, [session.status, router])
 
   const handleProfileUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -81,6 +95,23 @@ export default function ProfilePage() {
     }
   }
 
+  // Show loading state
+  if (isPageLoading || session.status === "loading") {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Safe access to user data
+  const userData = session.data?.user
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
@@ -125,10 +156,8 @@ export default function ProfilePage() {
                     <div className="flex justify-center mb-6">
                       <div className="neomorphism-icon h-24 w-24 p-1">
                         <Avatar className="h-full w-full">
-                          <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
-                          <AvatarFallback className="bg-primary/10">
-                            {session?.user?.name?.charAt(0) || "U"}
-                          </AvatarFallback>
+                          <AvatarImage src={userData?.image || ""} alt={userData?.name || "User"} />
+                          <AvatarFallback className="bg-primary/10">{userData?.name?.charAt(0) || "U"}</AvatarFallback>
                         </Avatar>
                       </div>
                     </div>
@@ -138,7 +167,7 @@ export default function ProfilePage() {
                       <NeomorphInput
                         id="name"
                         name="name"
-                        defaultValue={session?.user?.name || ""}
+                        defaultValue={userData?.name || ""}
                         placeholder="John Doe"
                         icon={<User className="h-4 w-4" />}
                       />
@@ -150,7 +179,7 @@ export default function ProfilePage() {
                         id="email"
                         name="email"
                         type="email"
-                        defaultValue={session?.user?.email || ""}
+                        defaultValue={userData?.email || ""}
                         placeholder="name@example.com"
                         disabled
                         icon={<Mail className="h-4 w-4" />}

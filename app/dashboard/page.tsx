@@ -1,5 +1,8 @@
 "use client"
 
+// הגדרת הדף כדינמי ישירות בקובץ
+export const dynamic = "force-dynamic"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"

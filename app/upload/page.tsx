@@ -1,7 +1,9 @@
 "use client"
 
-import type React from "react"
+// Mark this page as dynamic to prevent static optimization
+export const dynamic = "force-dynamic"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -18,7 +20,8 @@ import { parseResume } from "@/lib/resume-parser"
 
 export default function UploadPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
+  const session = useSession()
+  const [isPageLoading, setIsPageLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
@@ -33,12 +36,14 @@ export default function UploadPage() {
     effects: "minimal",
   })
 
-  // Check if user is authenticated
+  // Check if user is authenticated and handle loading state
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (session.status === "unauthenticated") {
       router.push("/login?callbackUrl=/upload")
+    } else if (session.status !== "loading") {
+      setIsPageLoading(false)
     }
-  }, [status, router])
+  }, [session.status, router])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -108,7 +113,7 @@ export default function UploadPage() {
   }
 
   // Show loading state while checking authentication
-  if (status === "loading") {
+  if (isPageLoading || session.status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
