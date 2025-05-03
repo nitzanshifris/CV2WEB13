@@ -1,97 +1,166 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Globe, Settings, Share2, Plus, Loader2 } from "lucide-react"
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
   const router = useRouter()
+  const session = useSession()
+  const [activeTab, setActiveTab] = useState("websites")
   const [isLoading, setIsLoading] = useState(true)
 
+  // Handle session loading state
   useEffect(() => {
-    // If authentication fails, redirect to login
-    if (status === "unauthenticated") {
-      router.push("/login")
-    } else if (status !== "loading") {
+    if (session.status !== "loading") {
       setIsLoading(false)
     }
-  }, [status, router])
 
-  if (status === "loading" || isLoading) {
+    // Redirect to login if unauthenticated
+    if (session.status === "unauthenticated") {
+      router.push("/login")
+    }
+  }, [session.status, router])
+
+  // Show loading state
+  if (isLoading || session.status === "loading") {
     return (
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="w-full">
-              <CardHeader>
-                <Skeleton className="h-8 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-10 w-28" />
-              </CardFooter>
-            </Card>
-          ))}
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
         </div>
       </div>
     )
   }
 
-  const userName = session?.user?.name || "User"
+  // Safe access to user data
+  const userData = session.data?.user
+  const userName = userData?.name || "User"
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Welcome, {userName}!</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Your CV Websites</CardTitle>
-            <CardDescription>Manage your created CV websites</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>You have 0 CV websites created.</p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => router.push("/upload")}>Create New</Button>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Templates</CardTitle>
-            <CardDescription>Browse available templates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Explore our collection of professional templates.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => router.push("/examples")}>
-              Browse Templates
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>Manage your account settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Update your profile and preferences.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => router.push("/profile")}>
-              Profile Settings
-            </Button>
-          </CardFooter>
-        </Card>
+    <div className="container mx-auto px-4 py-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Welcome back, {userName}</p>
+        </div>
+        <Link href="/upload">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Website
+          </Button>
+        </Link>
       </div>
+
+      <Tabs defaultValue="websites" className="w-full" onValueChange={setActiveTab}>
+        <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-3">
+          <TabsTrigger value="websites">My Websites</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="websites" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle>Professional CV</CardTitle>
+                  <Badge>Live</Badge>
+                </div>
+                <CardDescription>Created on May 1, 2025</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-muted rounded-md flex items-center justify-center mb-4">
+                  <Globe className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">yourname-professional.cvgenerator.com</p>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Placeholder for empty state */}
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle>Create a new website</CardTitle>
+                <CardDescription>Upload your CV to generate a new website</CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center py-8">
+                <Link href="/upload">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Upload CV
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Templates</CardTitle>
+                <CardDescription>Browse and select templates for your CV website</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>This feature is coming soon. Check back later for template options.</p>
+              </CardContent>
+              <CardFooter>
+                <Link href="/examples">
+                  <Button variant="outline">View Examples</Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+              <CardDescription>Manage your account preferences</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-2">Account Information</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-muted-foreground">Name:</div>
+                    <div>{userData?.name || "Not provided"}</div>
+                    <div className="text-muted-foreground">Email:</div>
+                    <div>{userData?.email || "Not provided"}</div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Link href="/profile">
+                    <Button variant="outline">Edit Profile</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
