@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState("")
 
-  // טיפול בהודעות שגיאה מפרמטרי URL
+  // Handle error messages from URL parameters
   let errorMessage = ""
   if (errorType) {
     switch (errorType) {
@@ -65,7 +65,7 @@ export default function LoginPage() {
         return
       }
 
-      // כניסה מוצלחת
+      // Successful login
       router.push(callbackUrl)
     } catch (error) {
       console.error("Login error:", error)
@@ -76,7 +76,7 @@ export default function LoginPage() {
 
   const handleOAuthSignIn = (provider) => {
     setIsLoading(true)
-    // שימוש בזרימת הפניה עבור OAuth כדי למנוע שגיאות בצד הלקוח
+    // Use redirect flow for OAuth to avoid client-side errors
     signIn(provider, { callbackUrl })
   }
 

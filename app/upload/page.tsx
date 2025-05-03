@@ -20,7 +20,9 @@ import { parseResume } from "@/lib/resume-parser"
 
 export default function UploadPage() {
   const router = useRouter()
-  const session = useSession()
+  const sessionResult = useSession()
+  const sessionStatus = sessionResult?.status || "loading"
+
   const [isPageLoading, setIsPageLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -38,12 +40,12 @@ export default function UploadPage() {
 
   // Check if user is authenticated and handle loading state
   useEffect(() => {
-    if (session.status === "unauthenticated") {
+    if (sessionStatus === "unauthenticated") {
       router.push("/login?callbackUrl=/upload")
-    } else if (session.status !== "loading") {
+    } else if (sessionStatus !== "loading") {
       setIsPageLoading(false)
     }
-  }, [session.status, router])
+  }, [sessionStatus, router])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -113,7 +115,7 @@ export default function UploadPage() {
   }
 
   // Show loading state while checking authentication
-  if (isPageLoading || session.status === "loading") {
+  if (isPageLoading || sessionStatus === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

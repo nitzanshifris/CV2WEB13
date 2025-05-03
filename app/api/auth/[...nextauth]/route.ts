@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import GithubProvider from "next-auth/providers/github"
 
-// Simplified auth configuration
+// Simplified auth options to avoid potential issues
 const authOptions = {
   providers: [
     CredentialsProvider({
@@ -44,27 +44,22 @@ const authOptions = {
   ],
   pages: {
     signIn: "/login",
-    error: "/login",
   },
   callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub
-      }
-      return session
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
       }
       return token
     },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub
+      }
+      return session
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET || "development-secret-do-not-use-in-production",
-  session: {
-    strategy: "jwt",
-  },
-  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
 }
 
 // Create handler with NextAuth

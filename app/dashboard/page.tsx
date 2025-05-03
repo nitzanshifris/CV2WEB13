@@ -5,34 +5,34 @@ export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Globe, Settings, Share2, Plus, Loader2 } from "lucide-react"
+import { useSafeSession } from "@/hooks/use-safe-session"
 
 export default function DashboardPage() {
   const router = useRouter()
-  const session = useSession()
+  const { status, session, isLoading, isAuthenticated, isUnauthenticated } = useSafeSession()
   const [activeTab, setActiveTab] = useState("websites")
-  const [isLoading, setIsLoading] = useState(true)
+  const [pageLoading, setPageLoading] = useState(true)
 
   // Handle session loading state
   useEffect(() => {
-    if (session.status !== "loading") {
-      setIsLoading(false)
+    if (status !== "loading") {
+      setPageLoading(false)
     }
 
     // Redirect to login if unauthenticated
-    if (session.status === "unauthenticated") {
+    if (isUnauthenticated) {
       router.push("/login")
     }
-  }, [session.status, router])
+  }, [status, isUnauthenticated, router])
 
   // Show loading state
-  if (isLoading || session.status === "loading") {
+  if (pageLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="flex justify-center items-center h-[60vh]">
@@ -46,7 +46,7 @@ export default function DashboardPage() {
   }
 
   // Safe access to user data
-  const userData = session.data?.user
+  const userData = session?.user
   const userName = userData?.name || "User"
 
   return (
