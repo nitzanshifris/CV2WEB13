@@ -1,7 +1,8 @@
 import { createServerSupabaseClient, supabase } from "@/lib/supabase"
 
-export async function getSession() {
-  const serverSupabase = createServerSupabaseClient()
+export async function getSession(context?: { req: any; res: any }) {
+  // Use the context if provided, otherwise use the basic client
+  const serverSupabase = context ? createServerSupabaseClient(context) : supabase
 
   try {
     const {
@@ -15,14 +16,15 @@ export async function getSession() {
   }
 }
 
-export async function getUserDetails() {
-  const session = await getSession()
+export async function getUserDetails(context?: { req: any; res: any }) {
+  const session = await getSession(context)
 
   if (!session?.user) {
     return null
   }
 
-  const serverSupabase = createServerSupabaseClient()
+  // Use the context if provided, otherwise use the basic client
+  const serverSupabase = context ? createServerSupabaseClient(context) : supabase
 
   try {
     const { data: user } = await serverSupabase.from("users").select("*").eq("id", session.user.id).single()
@@ -34,8 +36,9 @@ export async function getUserDetails() {
   }
 }
 
-export async function signOut() {
-  const serverSupabase = createServerSupabaseClient()
+export async function signOut(context?: { req: any; res: any }) {
+  // Use the context if provided, otherwise use the basic client
+  const serverSupabase = context ? createServerSupabaseClient(context) : supabase
   await serverSupabase.auth.signOut()
 }
 

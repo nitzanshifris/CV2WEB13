@@ -1,33 +1,56 @@
 import { createClient } from "@supabase/supabase-js"
-import { createClientComponentClient as createClientComponentClientHelper } from "@supabase/auth-helpers-nextjs"
-import { createServerComponentClient as createServerComponentClientHelper } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import type { Database } from "@/types/supabase"
 
+// Environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// For client-side usage (CSR)
+// Basic client for client-side usage
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-// For client components
-export function createClientComponentClient() {
-  return createClientComponentClientHelper<Database>()
-}
-
-// This function was missing - adding it back for backward compatibility
+// For client-side usage
 export function createBrowserSupabaseClient() {
-  return createClientComponentClientHelper<Database>()
+  return createClient<Database>(supabaseUrl, supabaseAnonKey)
 }
 
-// For server components
-export function createServerComponentClient() {
-  return createServerComponentClientHelper<Database>({ cookies })
+// For backward compatibility
+export function createClientComponentClient() {
+  return createBrowserSupabaseClient()
 }
 
-// Add this function for backward compatibility
-export function createServerSupabaseClient() {
-  return createServerComponentClientHelper<Database>({ cookies })
+// For server-side usage in pages/ directory (Pages Router)
+export function createServerSupabaseClient(context?: { req: any; res: any }) {
+  // If no context is provided or we're on the client side, return a basic client
+  if (!context?.req || typeof window !== "undefined") {
+    return createClient<Database>(supabaseUrl, supabaseAnonKey)
+  }
+
+  // For server-side in pages/ directory, use the cookies from the request
+  const { createServerComponentClient: createServerClient } = require("@supabase/auth-helpers-nextjs")
+
+  return createServerClient<Database>({
+    cookies: {
+      getAll: () => {
+        const cookies = context.req.cookies
+        return Object.entries(cookies).map(([name, value]) => ({
+          name,
+          value,
+        }))
+      },
+      get: (name: string) => {
+        const cookies = context.req.cookies
+        const value = cookies[name]
+        return value ? { name, value } : undefined
+      },
+      set: () => {}, // Not needed for read operations
+      remove: () => {}, // Not needed for read operations
+    },
+  })
+}
+
+// For backward compatibility
+export function createServerComponentClient(context?: { req: any; res: any }) {
+  return createServerSupabaseClient(context)
 }
 
 // Mock function to get public templates

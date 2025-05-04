@@ -10,7 +10,6 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const path = req.nextUrl.pathname
 
-  // יצירת לקוח Supabase למידלוור
   // בדיקה אם הנתיב מוגן
   const isProtectedPath = protectedPaths.some(
     (protectedPath) => path === protectedPath || path.startsWith(`${protectedPath}/`),
