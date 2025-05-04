@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
-import { WebsitePreview } from "@/components/website-preview"
+import { WebsitePreviewWrapper } from "@/components/website-preview-wrapper"
 import { ScrollReveal } from "@/components/scroll-reveal"
 import { CursorEffects } from "@/components/cursor-effects"
 
@@ -71,6 +71,10 @@ const sampleResumeData = {
   ],
 }
 
+// Prevent static generation
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export default function WebsitePreviewPage() {
   return (
     <div className="container py-8 relative">
@@ -91,12 +95,7 @@ export default function WebsitePreviewPage() {
           </div>
         }
       >
-        <WebsitePreview
-          resumeData={sampleResumeData}
-          templateId="professional"
-          onEdit={() => console.log("Edit clicked")}
-          onCustomize={() => console.log("Customize clicked")}
-        />
+        <WebsitePreviewWrapper resumeData={sampleResumeData} templateId="professional" />
       </Suspense>
 
       <ScrollReveal delay={400}>
