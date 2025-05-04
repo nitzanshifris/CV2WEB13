@@ -85,6 +85,15 @@
     --glass-saturation: 180%;
     --glass-refraction: 1.2;
     --glass-hue-rotate: 0deg;
+
+    /* הוספת משתנים חדשים */
+    --padding-container: 20px;
+    --nav-height: 70px;
+
+    /* עקומות אנימציה */
+    --animation-primary: cubic-bezier(0.75, 0, 0.25, 1);
+    --animation-smooth: cubic-bezier(0.75, 0, 0.25, 1);
+    --animation-primary-expo: cubic-bezier(0.87, 0, 0.13, 1);
   }
 
   .dark {
@@ -198,17 +207,58 @@
   }
 }
 
+/* הוספת אנימציות חדשות */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* אנימציות מבוססות גלילה */
+@keyframes revealFromBottom {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Animation utility classes */
 .animate-fade-in {
-  animation: fadeIn var(--transition-normal) var(--ease-out) forwards;
+  animation: fadeIn var(--transition-normal) var(--animation-smooth) forwards;
 }
 
 .animate-slide-in-up {
-  animation: slideInUp var(--transition-normal) var(--ease-out) forwards;
+  animation: slideInUp var(--transition-normal) var(--animation-smooth) forwards;
 }
 
 .animate-pulse {
-  animation: pulse 2s var(--ease-in-out) infinite;
+  animation: pulse 2s var(--animation-primary) infinite;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-normal) var(--animation-smooth) forwards;
+}
+
+/* אפקט טקסט מפוצל */
+.split-text-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.split-text-char.revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Staggered animation delays */
@@ -251,7 +301,7 @@
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-normal) var(--ease-out);
+  transition: all var(--transition-normal) var(--animation-smooth);
 }
 
 .glass-card::before {
@@ -263,7 +313,7 @@
   height: 100%;
   background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
   transform: skewX(-15deg);
-  transition: all 0.8s var(--ease-out);
+  transition: all 0.8s var(--animation-smooth);
   opacity: 0;
 }
 
@@ -293,7 +343,7 @@
   box-shadow: 0 4px 16px 0 var(--glass-shadow);
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-normal) var(--ease-out);
+  transition: all var(--transition-normal) var(--animation-smooth);
 }
 
 .glass-button::before {
@@ -304,7 +354,7 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
-  transition: all 0.6s var(--ease-out);
+  transition: all 0.6s var(--animation-smooth);
 }
 
 .glass-button:hover::before {
@@ -328,7 +378,7 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 16px 0 var(--glass-shadow);
-  transition: all var(--transition-normal) var(--ease-out);
+  transition: all var(--transition-normal) var(--animation-smooth);
 }
 
 .glass-input:focus {
@@ -483,6 +533,16 @@
 .reveal-on-scroll.revealed {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* אנימציות מבוססות גלילה */
+.reveal-from-bottom {
+  opacity: 0;
+  transform: translateY(50px);
+}
+
+.reveal-from-bottom.is-revealed {
+  animation: revealFromBottom 0.8s var(--animation-smooth) forwards;
 }
 
 /* Floating elements */
@@ -779,7 +839,8 @@ html {
 
 /* Improved card hover effects */
 .card-hover {
-  transition: transform var(--transition-normal) var(--ease-out), box-shadow var(--transition-normal) var(--ease-out);
+  transition: transform var(--transition-normal) var(--animation-smooth), box-shadow var(--transition-normal)
+    var(--animation-smooth);
 }
 
 .card-hover:hover {
@@ -861,4 +922,123 @@ html {
 .glass-depth-4 {
   --glass-blur: 24px;
   --glass-saturation: 200%;
+}
+
+/* אפקט טקסט מפוצל */
+.split-text-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.split-text-char.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* אפקט טופס צף */
+.float-label {
+  position: relative;
+}
+
+.float-label input {
+  height: 56px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.float-label input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.float-label label {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: transparent;
+  padding: 0 4px;
+  color: var(--muted-foreground);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.float-label input:focus + label,
+.float-label input:not(:placeholder-shown) + label {
+  top: 0;
+  transform: translateY(-50%) scale(0.85);
+  background-color: var(--background);
+}
+
+/* אפקט מעקב עכבר */
+.mouse-follower {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  mix-blend-mode: difference;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, background-color 0.3s;
+}
+
+.mouse-follower.hover {
+  width: 50px;
+  height: 50px;
+  background-color: var(--primary);
+}
+
+.mouse-follower.click {
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+/* התאמת משתני מרווחים למסכים שונים */
+@media (min-width: 576px) {
+  :root {
+    --padding-container: 4vw;
+  }
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --padding-container: 40px;
+  }
+}
+
+/* התאמה למכשירי מגע לעומת עכבר */
+@media (hover: hover) {
+  .hover-effect {
+    transition: transform 0.3s;
+  }
+  .hover-effect:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* מניעת אנימציות במכשירים שמעדיפים פחות אנימציות */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .parallax-layer,
+  .parallax-bg,
+  .parallax-slow,
+  .parallax-medium,
+  .parallax-fast,
+  .floating,
+  .floating-slow,
+  .floating-fast {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }

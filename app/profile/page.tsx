@@ -1,14 +1,11 @@
 "use client"
 
-// הגדרת הדף כדינמי ישירות בקובץ
-export const dynamic = "force-dynamic"
-
 import type React from "react"
+
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useSupabase } from "@/components/session-provider"
 import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { User, Mail, Lock, Loader2 } from "lucide-react"
@@ -24,28 +21,49 @@ import { NeomorphButton } from "@/components/neomorphism/button"
 import { NeomorphInput } from "@/components/neomorphism/input"
 import { NeomorphToggle } from "@/components/neomorphism/toggle"
 import { RevealOnScroll } from "@/components/parallax-effect"
+import { supabase } from "@/lib/supabase"
+import { ProfileImageUploader } from "@/components/profile-image-uploader"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const session = useSession()
+  const { user, isLoading: isSessionLoading } = useSupabase()
+
   const [isPageLoading, setIsPageLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
+  const [userData, setUserData] = useState<any>(null)
   const [notifications, setNotifications] = useState({
     email: true,
     marketing: false,
     updates: true,
   })
 
-  // Check authentication status
+  // טעינת נתוני המשתמש
   useEffect(() => {
-    if (session.status === "unauthenticated") {
-      router.push("/login?callbackUrl=/profile")
-    } else if (session.status !== "loading") {
-      setIsPageLoading(false)
+    const fetchUserData = async () => {
+      if (!user) return
+
+      try {
+        const { data, error } = await supabase.from("users").select("*").eq("id", user.id).single()
+
+        if (error) throw error
+        setUserData(data)
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+      } finally {
+        setIsPageLoading(false)
+      }
     }
-  }, [session.status, router])
+
+    if (!isSessionLoading) {
+      if (!user) {
+        router.push("/login?callbackUrl=/profile")
+      } else {
+        fetchUserData()
+      }
+    }
+  }, [user, isSessionLoading, router])
 
   const handleProfileUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,11 +72,25 @@ export default function ProfilePage() {
     setError("")
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setSuccess("Profile updated successfully")
+      const formData = new FormData(e.currentTarget)
+      const name = formData.get("name") as string
+
+      // עדכון נתוני המשתמש
+      const { error } = await supabase
+        .from("users")
+        .update({
+          name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user?.id)
+
+      if (error) throw error
+
+      setSuccess("הפרופיל עודכן בהצלחה")
+      setUserData((prev) => ({ ...prev, name }))
     } catch (error) {
-      setError("Failed to update profile")
+      console.error("Error updating profile:", error)
+      setError("עדכון הפרופיל נכשל")
     } finally {
       setIsLoading(false)
     }
@@ -76,47 +108,49 @@ export default function ProfilePage() {
     const confirmPassword = formData.get("confirmPassword") as string
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match")
+      setError("הסיסמאות החדשות אינן תואמות")
       setIsLoading(false)
       return
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setSuccess("Password updated successfully")
+      // עדכון סיסמה
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
 
-      // Reset form
+      if (error) throw error
+
+      setSuccess("הסיסמה עודכנה בהצלחה")
+      // איפוס הטופס
       e.currentTarget.reset()
     } catch (error) {
-      setError("Failed to update password")
+      console.error("Error updating password:", error)
+      setError("עדכון הסיסמה נכשל")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Show loading state
-  if (isPageLoading || session.status === "loading") {
+  // הצגת מצב טעינה
+  if (isPageLoading || isSessionLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="flex justify-center items-center h-[60vh]">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading profile...</p>
+            <p className="text-muted-foreground">טוען פרופיל...</p>
           </div>
         </div>
       </div>
     )
   }
 
-  // Safe access to user data
-  const userData = session.data?.user
-
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
         <RevealOnScroll>
-          <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+          <h1 className="text-3xl font-bold mb-8">הגדרות פרופיל</h1>
         </RevealOnScroll>
 
         {success && (
@@ -134,13 +168,13 @@ export default function ProfilePage() {
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8 neomorphism">
             <TabsTrigger value="profile" className="data-[state=active]:neomorphism-inset">
-              Profile
+              פרופיל
             </TabsTrigger>
             <TabsTrigger value="password" className="data-[state=active]:neomorphism-inset">
-              Password
+              סיסמה
             </TabsTrigger>
             <TabsTrigger value="notifications" className="data-[state=active]:neomorphism-inset">
-              Notifications
+              התראות
             </TabsTrigger>
           </TabsList>
 
@@ -148,33 +182,32 @@ export default function ProfilePage() {
             <RevealOnScroll delay={100}>
               <NeomorphCard>
                 <NeomorphCardHeader>
-                  <NeomorphCardTitle>Profile Information</NeomorphCardTitle>
-                  <NeomorphCardDescription>Update your account profile information</NeomorphCardDescription>
+                  <NeomorphCardTitle>מידע אישי</NeomorphCardTitle>
+                  <NeomorphCardDescription>עדכן את פרטי הפרופיל שלך</NeomorphCardDescription>
                 </NeomorphCardHeader>
                 <form onSubmit={handleProfileUpdate}>
                   <NeomorphCardContent className="space-y-4">
                     <div className="flex justify-center mb-6">
-                      <div className="neomorphism-icon h-24 w-24 p-1">
-                        <Avatar className="h-full w-full">
-                          <AvatarImage src={userData?.image || ""} alt={userData?.name || "User"} />
-                          <AvatarFallback className="bg-primary/10">{userData?.name?.charAt(0) || "U"}</AvatarFallback>
-                        </Avatar>
-                      </div>
+                      <ProfileImageUploader
+                        avatarUrl={userData?.avatar_url}
+                        name={userData?.name}
+                        onUploadComplete={(url) => setUserData((prev) => ({ ...prev, avatar_url: url }))}
+                      />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">שם מלא</Label>
                       <NeomorphInput
                         id="name"
                         name="name"
                         defaultValue={userData?.name || ""}
-                        placeholder="John Doe"
+                        placeholder="ישראל ישראלי"
                         icon={<User className="h-4 w-4" />}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">אימייל</Label>
                       <NeomorphInput
                         id="email"
                         name="email"
@@ -184,14 +217,12 @@ export default function ProfilePage() {
                         disabled
                         icon={<Mail className="h-4 w-4" />}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Your email address is used for login and cannot be changed
-                      </p>
+                      <p className="text-xs text-muted-foreground">כתובת האימייל שלך משמשת להתחברות ולא ניתן לשנותה</p>
                     </div>
                   </NeomorphCardContent>
                   <NeomorphCardFooter>
-                    <NeomorphButton type="submit" variant="primary" isLoading={isLoading} loadingText="Saving...">
-                      Save Changes
+                    <NeomorphButton type="submit" variant="primary" isLoading={isLoading} loadingText="שומר...">
+                      שמור שינויים
                     </NeomorphButton>
                   </NeomorphCardFooter>
                 </form>
@@ -203,13 +234,13 @@ export default function ProfilePage() {
             <RevealOnScroll delay={100}>
               <NeomorphCard>
                 <NeomorphCardHeader>
-                  <NeomorphCardTitle>Change Password</NeomorphCardTitle>
-                  <NeomorphCardDescription>Update your account password</NeomorphCardDescription>
+                  <NeomorphCardTitle>שינוי סיסמה</NeomorphCardTitle>
+                  <NeomorphCardDescription>עדכן את סיסמת החשבון שלך</NeomorphCardDescription>
                 </NeomorphCardHeader>
                 <form onSubmit={handlePasswordUpdate}>
                   <NeomorphCardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Label htmlFor="currentPassword">סיסמה נוכחית</Label>
                       <NeomorphInput
                         id="currentPassword"
                         name="currentPassword"
@@ -220,7 +251,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
+                      <Label htmlFor="newPassword">סיסמה חדשה</Label>
                       <NeomorphInput
                         id="newPassword"
                         name="newPassword"
@@ -231,7 +262,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Label htmlFor="confirmPassword">אימות סיסמה חדשה</Label>
                       <NeomorphInput
                         id="confirmPassword"
                         name="confirmPassword"
@@ -242,8 +273,8 @@ export default function ProfilePage() {
                     </div>
                   </NeomorphCardContent>
                   <NeomorphCardFooter>
-                    <NeomorphButton type="submit" variant="primary" isLoading={isLoading} loadingText="Updating...">
-                      Update Password
+                    <NeomorphButton type="submit" variant="primary" isLoading={isLoading} loadingText="מעדכן...">
+                      עדכן סיסמה
                     </NeomorphButton>
                   </NeomorphCardFooter>
                 </form>
@@ -255,14 +286,14 @@ export default function ProfilePage() {
             <RevealOnScroll delay={100}>
               <NeomorphCard>
                 <NeomorphCardHeader>
-                  <NeomorphCardTitle>Notification Settings</NeomorphCardTitle>
-                  <NeomorphCardDescription>Manage your notification preferences</NeomorphCardDescription>
+                  <NeomorphCardTitle>הגדרות התראות</NeomorphCardTitle>
+                  <NeomorphCardDescription>נהל את העדפות ההתראות שלך</NeomorphCardDescription>
                 </NeomorphCardHeader>
                 <NeomorphCardContent className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Email Notifications</h4>
-                      <p className="text-sm text-muted-foreground">Receive emails about your account activity</p>
+                      <h4 className="font-medium">התראות אימייל</h4>
+                      <p className="text-sm text-muted-foreground">קבל אימיילים על פעילות בחשבון שלך</p>
                     </div>
                     <NeomorphToggle
                       checked={notifications.email}
@@ -272,8 +303,8 @@ export default function ProfilePage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Marketing Emails</h4>
-                      <p className="text-sm text-muted-foreground">Receive emails about new features and offers</p>
+                      <h4 className="font-medium">אימיילים שיווקיים</h4>
+                      <p className="text-sm text-muted-foreground">קבל אימיילים על תכונות חדשות ומבצעים</p>
                     </div>
                     <NeomorphToggle
                       checked={notifications.marketing}
@@ -283,8 +314,8 @@ export default function ProfilePage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Product Updates</h4>
-                      <p className="text-sm text-muted-foreground">Receive updates about product improvements</p>
+                      <h4 className="font-medium">עדכוני מוצר</h4>
+                      <p className="text-sm text-muted-foreground">קבל עדכונים על שיפורים במוצר</p>
                     </div>
                     <NeomorphToggle
                       checked={notifications.updates}
@@ -293,7 +324,7 @@ export default function ProfilePage() {
                   </div>
                 </NeomorphCardContent>
                 <NeomorphCardFooter>
-                  <NeomorphButton variant="primary">Save Preferences</NeomorphButton>
+                  <NeomorphButton variant="primary">שמור העדפות</NeomorphButton>
                 </NeomorphCardFooter>
               </NeomorphCard>
             </RevealOnScroll>

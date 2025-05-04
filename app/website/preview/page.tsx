@@ -1,186 +1,126 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { GlassButton } from "@/components/glassmorphism/glass-button"
-import { Loader2, ArrowLeft, Download, Globe, Share2, Copy } from "lucide-react"
+import { Suspense } from "react"
+import { Loader2 } from "lucide-react"
 import { WebsitePreview } from "@/components/website-preview"
+import { ScrollReveal } from "@/components/scroll-reveal"
+import { CursorEffects } from "@/components/cursor-effects"
 
-// Mock data for development - in production this would come from the database
-const mockResumeData = {
+// מידע לדוגמה
+const sampleResumeData = {
   personalInfo: {
-    name: "John Doe",
-    title: "Senior Software Engineer",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    website: "johndoe.dev",
-    summary:
-      "Experienced software engineer with a passion for building scalable web applications and solving complex problems.",
+    name: "ישראל ישראלי",
+    title: "מפתח Full Stack",
+    email: "israel@example.com",
+    phone: "050-1234567",
+    location: "תל אביב, ישראל",
+    website: "https://example.com",
+    summary: "מפתח Full Stack עם ניסיון של 5 שנים בפיתוח אפליקציות ואתרים. מומחה ב-React, Node.js ו-TypeScript.",
   },
   experience: [
     {
-      title: "Senior Software Engineer",
-      company: "Tech Innovations Inc.",
-      location: "San Francisco, CA",
-      startDate: "2020-01",
-      endDate: "Present",
-      description:
-        "Lead developer for cloud-based SaaS platform. Implemented microservices architecture and CI/CD pipeline.",
+      position: "מפתח Full Stack",
+      company: 'חברת טכנולוגיה בע"מ',
+      startDate: "2020",
+      endDate: "היום",
+      description: "פיתוח ותחזוקה של אפליקציות ואתרים בסביבת React ו-Node.js.",
+      highlights: ["הובלת צוות פיתוח", "שיפור ביצועים ב-50%", "יישום CI/CD"],
     },
     {
-      title: "Software Engineer",
-      company: "WebSolutions Co.",
-      location: "Boston, MA",
-      startDate: "2017-03",
-      endDate: "2019-12",
-      description: "Developed and maintained multiple client-facing web applications using React and Node.js.",
+      position: "מפתח Front-end",
+      company: "סטארט-אפ חדשני",
+      startDate: "2018",
+      endDate: "2020",
+      description: "פיתוח ממשקי משתמש מתקדמים באמצעות React ו-TypeScript.",
+      highlights: ["עיצוב ופיתוח UI/UX", "אופטימיזציה לביצועים"],
     },
   ],
   education: [
     {
-      degree: "Master of Science in Computer Science",
-      institution: "Stanford University",
-      location: "Stanford, CA",
-      startDate: "2015-09",
-      endDate: "2017-06",
-    },
-    {
-      degree: "Bachelor of Science in Computer Engineering",
-      institution: "MIT",
-      location: "Cambridge, MA",
-      startDate: "2011-09",
-      endDate: "2015-05",
+      degree: "תואר ראשון",
+      field: "מדעי המחשב",
+      institution: "אוניברסיטת תל אביב",
+      startDate: "2015",
+      endDate: "2018",
+      description: "התמחות בפיתוח תוכנה ואלגוריתמים.",
     },
   ],
   skills: [
-    "JavaScript",
-    "TypeScript",
-    "React",
-    "Node.js",
-    "Python",
-    "AWS",
-    "Docker",
-    "Kubernetes",
-    "GraphQL",
-    "REST APIs",
-    "MongoDB",
-    "PostgreSQL",
-    "CI/CD",
-    "Agile Methodologies",
+    { name: "JavaScript", level: 5 },
+    { name: "TypeScript", level: 4 },
+    { name: "React", level: 5 },
+    { name: "Node.js", level: 4 },
+    { name: "HTML/CSS", level: 5 },
+    { name: "SQL", level: 3 },
+  ],
+  languages: [
+    { language: "עברית", proficiency: "שפת אם" },
+    { language: "אנגלית", proficiency: "שליטה מלאה" },
   ],
   projects: [
     {
-      name: "E-commerce Platform",
-      description: "Built a full-stack e-commerce platform with React, Node.js, and MongoDB.",
-      url: "https://github.com/johndoe/ecommerce",
+      name: "מערכת ניהול לקוחות",
+      description: "פיתוח מערכת CRM מתקדמת עם React ו-Node.js.",
+      url: "https://example.com/crm",
+      highlights: ["React", "Node.js", "MongoDB"],
     },
     {
-      name: "Task Management App",
-      description: "Developed a task management application with real-time updates using Socket.io.",
-      url: "https://github.com/johndoe/taskmanager",
+      name: "אפליקציית מובייל",
+      description: "פיתוח אפליקציה היברידית עם React Native.",
+      url: "https://example.com/app",
+      highlights: ["React Native", "Firebase"],
     },
   ],
 }
 
-const mockWebsiteConfig = {
-  colorScheme: "blue",
-  fontStyle: "modern",
-  layout: "standard",
-  effects: "minimal",
-  sections: {
-    about: true,
-    experience: true,
-    education: true,
-    skills: true,
-    projects: true,
-    contact: true,
-  },
-  customizations: {
-    headerImage: "/placeholder.svg?key=1br4q",
-    profile: "",
-  },
-}
-
-export default function Page() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const { data: session, status } = useSession()
-  const [websiteUrl, setWebsiteUrl] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    if (searchParams.has("websiteUrl")) {
-      setWebsiteUrl(searchParams.get("websiteUrl") as string)
-    }
-  }, [searchParams])
-
-  if (status === "loading") {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Please wait, loading...
-      </div>
-    )
-  }
-
-  if (status === "unauthenticated") {
-    router.push("/")
-    return null
-  }
-
-  const handleBack = () => {
-    router.back()
-  }
-
-  const handleDownload = () => {
-    // Trigger download logic here
-    alert("Download functionality not implemented yet.")
-  }
-
-  const handleShare = () => {
-    // Trigger share logic here
-    alert("Share functionality not implemented yet.")
-  }
-
-  const handleCopy = () => {
-    // Trigger copy logic here
-    alert("Copy functionality not implemented yet.")
-  }
-
+export default function WebsitePreviewPage() {
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="outline" size="icon" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div className="flex space-x-2">
-          <GlassButton onClick={handleDownload}>
-            <Download className="h-4 w-4" />
-          </GlassButton>
-          <GlassButton onClick={handleShare}>
-            <Share2 className="h-4 w-4" />
-          </GlassButton>
-          <GlassButton onClick={handleCopy}>
-            <Copy className="h-4 w-4" />
-          </GlassButton>
-          <GlassButton>
-            <Globe className="h-4 w-4" />
-          </GlassButton>
-        </div>
-      </div>
+    <div className="container py-8 relative">
+      <ScrollReveal>
+        <h1 className="text-3xl font-bold mb-8 gradient-text">תצוגה מקדימה של האתר</h1>
+      </ScrollReveal>
 
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center h-64">
-          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          Loading website preview...
+      <ScrollReveal delay={200}>
+        <p className="text-muted-foreground mb-8">
+          להלן תצוגה מקדימה של אתר ה-CV שלך. ניתן לראות כיצד האתר ייראה במכשירים שונים ולערוך את התוכן לפי הצורך.
+        </p>
+      </ScrollReveal>
+
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-[600px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        }
+      >
+        <WebsitePreview
+          resumeData={sampleResumeData}
+          templateId="professional"
+          onEdit={() => console.log("Edit clicked")}
+          onCustomize={() => console.log("Customize clicked")}
+        />
+      </Suspense>
+
+      <ScrollReveal delay={400}>
+        <div className="mt-12 bg-muted p-6 rounded-lg">
+          <h2 className="text-xl font-bold mb-4">טיפים לשיפור האתר שלך</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li>הוסף תמונת פרופיל איכותית להגברת האמינות והמקצועיות.</li>
+            <li>וודא שהתיאור האישי שלך ממוקד ומדגיש את היתרונות הייחודיים שלך.</li>
+            <li>הוסף קישורים לפרויקטים ועבודות קודמות כדי להציג את היכולות שלך.</li>
+            <li>התאם את הצבעים והעיצוב כך שישקפו את האישיות המקצועית שלך.</li>
+            <li>בדוק את האתר במכשירים שונים כדי לוודא שהוא מגיב כראוי.</li>
+          </ul>
         </div>
-      ) : (
-        <WebsitePreview websiteUrl={websiteUrl} resumeData={mockResumeData} websiteConfig={mockWebsiteConfig} />
-      )}
+      </ScrollReveal>
+
+      {/* אפקט עכבר מותאם אישית */}
+      <CursorEffects
+        cursorSize={24}
+        cursorColor="rgba(59, 130, 246, 0.2)"
+        cursorBorderColor="rgba(59, 130, 246, 0.5)"
+        trailEffect={true}
+        rippleEffect={true}
+        rippleColor="rgba(59, 130, 246, 0.3)"
+      />
     </div>
   )
 }

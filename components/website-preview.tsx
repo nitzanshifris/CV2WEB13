@@ -6,7 +6,20 @@ import type { WebsiteConfig } from "@/lib/website-generator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GlassCard } from "@/components/glassmorphism/glass-card"
 import { GlassButton } from "@/components/glassmorphism/glass-button"
-import { Loader2, ComputerIcon as Desktop, Tablet, Smartphone, Code, Download, Eye } from "lucide-react"
+import { TiltCard } from "@/components/tilt-card"
+import { ScrollReveal } from "@/components/scroll-reveal"
+import {
+  Loader2,
+  ComputerIcon as Desktop,
+  Tablet,
+  Smartphone,
+  Code,
+  Download,
+  Eye,
+  Share2,
+  Copy,
+  Check,
+} from "lucide-react"
 
 interface WebsitePreviewProps {
   resumeData: ParsedResume
@@ -19,6 +32,8 @@ export function WebsitePreview({ resumeData, templateId, onEdit, onCustomize }: 
   const [isLoading, setIsLoading] = useState(true)
   const [previewHtml, setPreviewHtml] = useState<string>("")
   const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile" | "code">("desktop")
+  const [copied, setCopied] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Configuration for the website
@@ -71,72 +86,135 @@ export function WebsitePreview({ resumeData, templateId, onEdit, onCustomize }: 
     }
   }
 
+  // Function to copy the HTML code
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(previewHtml)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Function to toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+  }
+
   return (
-    <div className="w-full">
+    <div className={`w-full ${isFullscreen ? "fixed inset-0 z-50 bg-background p-4" : ""}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Website Preview</h2>
+        <ScrollReveal>
+          <h2 className="text-xl font-bold gradient-text">Website Preview</h2>
+        </ScrollReveal>
         <div className="flex gap-2">
           {onEdit && (
-            <GlassButton variant="outline" size="sm" onClick={onEdit} className="gap-1">
-              <Eye className="h-4 w-4" />
-              Edit Resume
-            </GlassButton>
+            <ScrollReveal delay={100}>
+              <GlassButton variant="outline" size="sm" onClick={onEdit} className="gap-1">
+                <Eye className="h-4 w-4" />
+                Edit Resume
+              </GlassButton>
+            </ScrollReveal>
           )}
           {onCustomize && (
-            <GlassButton size="sm" onClick={onCustomize} className="gap-1">
-              <Download className="h-4 w-4" />
-              Customize
-            </GlassButton>
+            <ScrollReveal delay={200}>
+              <GlassButton size="sm" onClick={onCustomize} className="gap-1">
+                <Download className="h-4 w-4" />
+                Customize
+              </GlassButton>
+            </ScrollReveal>
           )}
         </div>
       </div>
 
-      <GlassCard className="p-4 overflow-hidden">
-        <div className="flex justify-between items-center mb-4">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full">
-            <TabsList className="grid grid-cols-4 w-[400px]">
-              <TabsTrigger value="desktop" className="flex items-center gap-2">
-                <Desktop className="h-4 w-4" />
-                <span className="hidden sm:inline">Desktop</span>
-              </TabsTrigger>
-              <TabsTrigger value="tablet" className="flex items-center gap-2">
-                <Tablet className="h-4 w-4" />
-                <span className="hidden sm:inline">Tablet</span>
-              </TabsTrigger>
-              <TabsTrigger value="mobile" className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4" />
-                <span className="hidden sm:inline">Mobile</span>
-              </TabsTrigger>
-              <TabsTrigger value="code" className="flex items-center gap-2">
-                <Code className="h-4 w-4" />
-                <span className="hidden sm:inline">Code</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      <ScrollReveal delay={300}>
+        <TiltCard className="overflow-hidden" maxTilt={5} glare={true} glareOpacity={0.2} disabled={isFullscreen}>
+          <GlassCard className="p-4 overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full">
+                <TabsList className="grid grid-cols-4 w-[400px]">
+                  <TabsTrigger value="desktop" className="flex items-center gap-2">
+                    <Desktop className="h-4 w-4" />
+                    <span className="hidden sm:inline">Desktop</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="tablet" className="flex items-center gap-2">
+                    <Tablet className="h-4 w-4" />
+                    <span className="hidden sm:inline">Tablet</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="mobile" className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" />
+                    <span className="hidden sm:inline">Mobile</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="code" className="flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    <span className="hidden sm:inline">Code</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="flex gap-2">
+                <GlassButton variant="outline" size="sm" onClick={toggleFullscreen} className="gap-1">
+                  <Eye className="h-4 w-4" />
+                  {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                </GlassButton>
+                {viewMode === "code" && (
+                  <GlassButton variant="outline" size="sm" onClick={copyToClipboard} className="gap-1">
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Copied!" : "Copy Code"}
+                  </GlassButton>
+                )}
+                <GlassButton variant="outline" size="sm" className="gap-1">
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </GlassButton>
+              </div>
+            </div>
 
-        <div className={`bg-muted rounded-md overflow-hidden ${getPreviewContainerClass()}`}>
-          {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Generating preview...</span>
+            <div
+              className={`bg-muted rounded-md overflow-hidden ${getPreviewContainerClass()} transition-all duration-300`}
+            >
+              {isLoading ? (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                  <span className="text-muted-foreground animate-pulse">Generating preview...</span>
+                  <div className="mt-4 text-sm text-muted-foreground max-w-md text-center">
+                    Creating a professional website preview based on your resume data. This may take a moment as we
+                    optimize the layout and styling.
+                  </div>
+                </div>
+              ) : viewMode === "code" ? (
+                <div className="w-full h-full overflow-auto bg-black text-white p-4 font-mono text-sm">
+                  <pre className="whitespace-pre-wrap">{previewHtml}</pre>
+                </div>
+              ) : (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={previewHtml}
+                  className="w-full h-full border-0 transition-all duration-300"
+                  onLoad={handleIframeLoad}
+                  title="Website Preview"
+                  sandbox="allow-same-origin allow-scripts"
+                />
+              )}
             </div>
-          ) : viewMode === "code" ? (
-            <div className="w-full h-full overflow-auto bg-black text-white p-4 font-mono text-sm">
-              <pre>{previewHtml}</pre>
-            </div>
-          ) : (
-            <iframe
-              ref={iframeRef}
-              srcDoc={previewHtml}
-              className="w-full h-full border-0"
-              onLoad={handleIframeLoad}
-              title="Website Preview"
-              sandbox="allow-same-origin allow-scripts"
-            />
-          )}
-        </div>
-      </GlassCard>
+
+            {!isLoading && viewMode !== "code" && (
+              <div className="mt-4 flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">Template:</span>{" "}
+                  {templateId.charAt(0).toUpperCase() + templateId.slice(1)}
+                </div>
+                <div className="flex gap-2">
+                  <GlassButton variant="outline" size="sm" className="gap-1">
+                    <Download className="h-4 w-4" />
+                    Download HTML
+                  </GlassButton>
+                  <GlassButton size="sm" className="gap-1">
+                    <Eye className="h-4 w-4" />
+                    Deploy Website
+                  </GlassButton>
+                </div>
+              </div>
+            )}
+          </GlassCard>
+        </TiltCard>
+      </ScrollReveal>
     </div>
   )
 }
@@ -222,17 +300,38 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: white;
       padding: 4rem 0;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+      z-index: 1;
+    }
+    
+    header .content {
+      position: relative;
+      z-index: 2;
     }
     
     header h1 {
       font-size: 2.5rem;
       margin-bottom: 0.5rem;
+      animation: fadeInDown 1s ease-out;
     }
     
     header .title {
       font-size: 1.5rem;
       margin-bottom: 1.5rem;
       opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.3s forwards;
+      opacity: 0;
     }
     
     .contact-info {
@@ -240,6 +339,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       flex-wrap: wrap;
       justify-content: center;
       gap: 1rem;
+      animation: fadeInUp 1s ease-out 0.6s forwards;
+      opacity: 0;
     }
     
     .contact-info p {
@@ -250,6 +351,11 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: white;
       text-decoration: none;
       border-bottom: 1px dotted rgba(255, 255, 255, 0.7);
+      transition: border-color 0.3s;
+    }
+    
+    .contact-info a:hover {
+      border-color: white;
     }
     
     main {
@@ -262,6 +368,12 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       background-color: var(--section-bg-color);
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    section:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
     
     h2 {
@@ -270,18 +382,63 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: var(--primary-color);
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary-color);
     }
     
     .timeline-item {
       margin-bottom: 2rem;
       padding-bottom: 2rem;
       border-bottom: 1px solid var(--border-color);
+      position: relative;
     }
     
     .timeline-item:last-child {
       border-bottom: none;
       margin-bottom: 0;
       padding-bottom: 0;
+    }
+    
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 0.5rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: none;
+    }
+    
+    @media (min-width: 768px) {
+      .timeline {
+        position: relative;
+        padding-left: 2rem;
+      }
+      
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--border-color);
+      }
+      
+      .timeline-item::before {
+        display: block;
+      }
     }
     
     .timeline-header {
@@ -323,6 +480,12 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       background-color: white;
       border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .skill-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
     .skill-level {
@@ -342,7 +505,7 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       height: 100%;
       background-color: var(--primary-color);
       width: 0;
-      transition: width 0.3s ease;
+      transition: width 1s ease;
     }
     
     .skill-level[data-level="1"]::after { width: 20%; }
@@ -357,6 +520,28 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       text-align: center;
       font-size: 0.9rem;
       color: #6b7280;
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     @media (max-width: 768px) {
@@ -390,13 +575,15 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
 <body>
   <header>
     <div class="container">
-      <h1>${resumeData.personalInfo.name}</h1>
-      <p class="title">${resumeData.personalInfo.title}</p>
-      <div class="contact-info">
-        <p>${resumeData.personalInfo.email}</p>
-        ${resumeData.personalInfo.phone ? `<p>${resumeData.personalInfo.phone}</p>` : ""}
-        ${resumeData.personalInfo.location ? `<p>${resumeData.personalInfo.location}</p>` : ""}
-        ${resumeData.personalInfo.website ? `<p><a href="${resumeData.personalInfo.website}">${resumeData.personalInfo.website}</a></p>` : ""}
+      <div class="content">
+        <h1>${resumeData.personalInfo.name}</h1>
+        <p class="title">${resumeData.personalInfo.title}</p>
+        <div class="contact-info">
+          <p>${resumeData.personalInfo.email}</p>
+          ${resumeData.personalInfo.phone ? `<p>${resumeData.personalInfo.phone}</p>` : ""}
+          ${resumeData.personalInfo.location ? `<p>${resumeData.personalInfo.location}</p>` : ""}
+          ${resumeData.personalInfo.website ? `<p><a href="${resumeData.personalInfo.website}">${resumeData.personalInfo.website}</a></p>` : ""}
+        </div>
       </div>
     </div>
   </header>
@@ -466,6 +653,26 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       <p>&copy; ${new Date().getFullYear()} ${resumeData.personalInfo.name}. All rights reserved.</p>
     </div>
   </footer>
+
+  <script>
+    // Simple animation to reveal skill levels on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+      const skillLevels = document.querySelectorAll('.skill-level');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animated');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.5 });
+      
+      skillLevels.forEach(skill => {
+        observer.observe(skill);
+      });
+    });
+  </script>
 </body>
 </html>
       `
@@ -510,6 +717,24 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       background-color: var(--sidebar-bg-color);
       padding: 2rem;
       border-right: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(0, 0, 0, 0.03) 100%);
+      z-index: 1;
+    }
+    
+    .sidebar > * {
+      position: relative;
+      z-index: 2;
     }
     
     .main-content {
@@ -520,6 +745,7 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
     .profile {
       text-align: center;
       margin-bottom: 2rem;
+      animation: fadeIn 1s ease-out;
     }
     
     .profile-image {
@@ -529,6 +755,13 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       object-fit: cover;
       margin: 0 auto 1rem;
       border: 3px solid var(--primary-color);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .profile-image:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     
     .profile h1 {
@@ -545,6 +778,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
     
     .contact-info {
       margin-bottom: 2rem;
+      animation: fadeIn 1s ease-out 0.3s forwards;
+      opacity: 0;
     }
     
     .contact-info h2 {
@@ -553,12 +788,28 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: var(--primary-color);
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .contact-info h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary-color);
     }
     
     .contact-item {
       display: flex;
       align-items: center;
       margin-bottom: 0.75rem;
+      transition: transform 0.3s;
+    }
+    
+    .contact-item:hover {
+      transform: translateX(5px);
     }
     
     .contact-item .icon {
@@ -569,6 +820,7 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
     
     .section {
       margin-bottom: 2.5rem;
+      animation: fadeIn 1s ease-out;
     }
     
     .section h2 {
@@ -577,15 +829,37 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: var(--primary-color);
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .section h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary-color);
     }
     
     .experience-item, .education-item {
       margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 8px;
+      background-color: #f9fafb;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .experience-item:hover, .education-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
     
     .experience-item h3, .education-item h3 {
       font-size: 1.3rem;
       margin-bottom: 0.25rem;
+      color: var(--text-color);
     }
     
     .company, .institution {
@@ -597,6 +871,12 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 0.75rem;
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      margin-top: 0.5rem;
     }
     
     ul {
@@ -612,6 +892,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
+      animation: fadeIn 1s ease-out 0.6s forwards;
+      opacity: 0;
     }
     
     .skill-tag {
@@ -620,6 +902,23 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       padding: 0.25rem 0.75rem;
       border-radius: 20px;
       font-size: 0.9rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .skill-tag:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     @media (max-width: 768px) {
@@ -740,8 +1039,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       <h2>Experience</h2>
       ${resumeData.experience
         .map(
-          (exp) => `
-      <div class="experience-item">
+          (exp, index) => `
+      <div class="experience-item" style="animation: fadeIn 1s ease-out ${0.3 + index * 0.2}s forwards; opacity: 0;">
         <h3>${exp.position}</h3>
         <p class="company">${exp.company}</p>
         <p class="date">${exp.startDate} - ${exp.endDate || "Present"}</p>
@@ -765,8 +1064,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       <h2>Education</h2>
       ${resumeData.education
         .map(
-          (edu) => `
-      <div class="education-item">
+          (edu, index) => `
+      <div class="education-item" style="animation: fadeIn 1s ease-out ${0.3 + index * 0.2}s forwards; opacity: 0;">
         <h3>${edu.degree}${edu.field ? `, ${edu.field}` : ""}</h3>
         <p class="institution">${edu.institution}</p>
         <p class="date">${edu.startDate} - ${edu.endDate || "Present"}</p>
@@ -784,8 +1083,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       <h2>Projects</h2>
       ${resumeData.projects
         .map(
-          (project) => `
-      <div class="experience-item">
+          (project, index) => `
+      <div class="experience-item" style="animation: fadeIn 1s ease-out ${0.3 + index * 0.2}s forwards; opacity: 0;">
         <h3>${project.name}</h3>
         <p>${project.description}</p>
         ${project.url ? `<p><a href="${project.url}" style="color: var(--primary-color);">${project.url}</a></p>` : ""}
@@ -814,8 +1113,8 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       <h2>Certifications</h2>
       ${resumeData.certifications
         .map(
-          (cert) => `
-      <div class="experience-item">
+          (cert, index) => `
+      <div class="experience-item" style="animation: fadeIn 1s ease-out ${0.3 + index * 0.2}s forwards; opacity: 0;">
         <h3>${cert.name}</h3>
         <p>${cert.issuer}${cert.date ? ` - ${cert.date}` : ""}</p>
         ${cert.url ? `<p><a href="${cert.url}" style="color: var(--primary-color);">${cert.url}</a></p>` : ""}
@@ -843,8 +1142,7 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
   <title>${resumeData.personalInfo.name} - ${resumeData.personalInfo.title}</title>
   <style>
     :root {
-      --primary-color: ${primaryColor};
-      --secondary-color: ${secondaryColor};
+      --primary-color: ${primaryColor};-secondary-color: ${secondaryColor};
       --accent-color: ${accentColor};
       --text-color: #1f2937;
       --background-color: #ffffff;
@@ -885,225 +1183,225 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       left: 0;
       width: 100%;
       height: 100%;
-      background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fillOpacity='0.1' fillRule='evenodd'/%3E%3C/svg%3E");
-      opacity: 0.5;
+      background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='white' fillOpacity='0.1' fillRule='evenodd'/%3E%3C/svg%3E");
+      z-index: 1;
     }
     
     .hero-content {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       max-width: 800px;
       padding: 0 2rem;
     }
     
     .hero h1 {
-      font-size: 4rem;
+      font-size: 3.5rem;
       margin-bottom: 1rem;
-      letter-spacing: 2px;
+      animation: fadeInDown 1s ease-out;
     }
     
-    .hero .title {
-      font-size: 1.8rem;
+    .hero p {
+      font-size: 1.5rem;
       margin-bottom: 2rem;
       opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.3s forwards;
+      opacity: 0;
     }
     
-    .scroll-down {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      animation: bounce 2s infinite;
+    .hero-image {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid white;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 1s ease-out;
+    }
+    
+    .contact-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      animation: fadeInUp 1s ease-out 0.6s forwards;
+      opacity: 0;
+    }
+    
+    .contact-links a {
       color: white;
-      font-size: 2rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      background-color: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s;
     }
     
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0) translateX(-50%);
-      }
-      40% {
-        transform: translateY(-20px) translateX(-50%);
-      }
-      60% {
-        transform: translateY(-10px) translateX(-50%);
-      }
+    .contact-links a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
     }
     
-    .container {
+    .main-content {
       max-width: 1200px;
       margin: 0 auto;
       padding: 4rem 2rem;
     }
     
-    .section-title {
-      text-align: center;
-      margin-bottom: 3rem;
-      position: relative;
+    .section {
+      margin-bottom: 5rem;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1s, transform 1s;
     }
     
-    .section-title h2 {
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .section-title {
       font-size: 2.5rem;
+      margin-bottom: 2rem;
       color: var(--primary-color);
+      position: relative;
       display: inline-block;
     }
     
-    .section-title h2::after {
+    .section-title::after {
       content: '';
       position: absolute;
       bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
+      left: 0;
+      width: 50px;
       height: 4px;
-      background: var(--accent-color);
-      border-radius: 2px;
-    }
-    
-    .about {
-      background-color: var(--section-bg-color);
-      padding: 6rem 0;
+      background-color: var(--primary-color);
     }
     
     .about-content {
-      max-width: 800px;
-      margin: 0 auto;
-      font-size: 1.2rem;
-      line-height: 1.8;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
     }
     
-    .experience, .education, .skills, .projects {
-      padding: 6rem 0;
+    .about-image {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
     
-    .experience:nth-child(odd), .education:nth-child(odd), .skills:nth-child(odd), .projects:nth-child(odd) {
+    .about-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.5s;
+    }
+    
+    .about-image:hover img {
+      transform: scale(1.05);
+    }
+    
+    .experience-grid, .education-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+    
+    .experience-card, .education-card {
       background-color: var(--section-bg-color);
-    }
-    
-    .timeline {
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
       position: relative;
-      max-width: 800px;
-      margin: 0 auto;
+      overflow: hidden;
     }
     
-    .timeline::after {
+    .experience-card::before, .education-card::before {
       content: '';
       position: absolute;
-      width: 4px;
-      background-color: var(--primary-color);
       top: 0;
-      bottom: 0;
-      left: 50%;
-      margin-left: -2px;
-    }
-    
-    .timeline-item {
-      padding: 10px 40px;
-      position: relative;
-      width: 50%;
-      box-sizing: border-box;
-    }
-    
-    .timeline-item::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: white;
-      border: 4px solid var(--primary-color);
-      top: 15px;
-      border-radius: 50%;
-      z-index: 1;
-    }
-    
-    .left {
       left: 0;
+      width: 5px;
+      height: 100%;
+      background-color: var(--primary-color);
     }
     
-    .right {
-      left: 50%;
+    .experience-card:hover, .education-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
     }
     
-    .left::after {
-      right: -10px;
+    .card-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
     }
     
-    .right::after {
-      left: -10px;
-    }
-    
-    .timeline-content {
-      padding: 20px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .timeline-content h3 {
-      font-size: 1.3rem;
-      margin-bottom: 0.25rem;
+    .card-subtitle {
+      font-size: 1.1rem;
       color: var(--primary-color);
+      margin-bottom: 1rem;
     }
     
-    .company, .institution {
-      font-weight: 500;
-      color: var(--secondary-color);
-    }
-    
-    .date {
+    .card-date {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 20px;
       font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
     
-    .skills-grid {
+    .skills-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 2rem;
     }
     
-    .skill-card {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 1.5rem;
-      transition: transform 0.3s ease;
+    .skill-category {
+      background-color: var(--section-bg-color);
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     }
     
-    .skill-card:hover {
-      transform: translateY(-5px);
-    }
-    
-    .skill-card h3 {
+    .skill-category h3 {
       font-size: 1.3rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
       color: var(--primary-color);
     }
     
-    .skill-level {
+    .skill-item {
+      margin-bottom: 1rem;
+    }
+    
+    .skill-name {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    
+    .skill-bar {
       height: 8px;
       background-color: #e5e7eb;
       border-radius: 4px;
-      margin-top: 0.75rem;
       overflow: hidden;
-      position: relative;
     }
     
-    .skill-level::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
+    .skill-progress {
       height: 100%;
       background-color: var(--primary-color);
       border-radius: 4px;
+      width: 0;
+      transition: width 1s ease;
     }
-    
-    .skill-level[data-level="1"]::after { width: 20%; }
-    .skill-level[data-level="2"]::after { width: 40%; }
-    .skill-level[data-level="3"]::after { width: 60%; }
-    .skill-level[data-level="4"]::after { width: 80%; }
-    .skill-level[data-level="5"]::after { width: 100%; }
     
     .projects-grid {
       display: grid;
@@ -1112,25 +1410,57 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
     }
     
     .project-card {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: var(--section-bg-color);
+      border-radius: 10px;
       overflow: hidden;
-      transition: transform 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
     
     .project-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
     }
     
-    .project-card-content {
+    .project-image {
+      height: 200px;
+      overflow: hidden;
+    }
+    
+    .project-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    
+    .project-card:hover .project-image img {
+      transform: scale(1.1);
+    }
+    
+    .project-content {
       padding: 1.5rem;
     }
     
-    .project-card h3 {
+    .project-title {
       font-size: 1.3rem;
-      margin-bottom: 0.75rem;
-      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+    
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .project-tag {
+      padding: 0.25rem 0.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      font-size: 0.8rem;
     }
     
     .project-link {
@@ -1139,7 +1469,7 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
       color: var(--primary-color);
       text-decoration: none;
       font-weight: 500;
-      transition: color 0.3s ease;
+      transition: color 0.3s;
     }
     
     .project-link:hover {
@@ -1149,82 +1479,101 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
     footer {
       background-color: var(--primary-color);
       color: white;
-      padding: 4rem 0;
+      padding: 3rem 0;
       text-align: center;
     }
     
-    .contact-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
+    .footer-content {
       max-width: 800px;
-      margin: 0 auto 3rem;
+      margin: 0 auto;
+      padding: 0 2rem;
     }
     
-    .contact-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .contact-icon {
+    .footer-title {
       font-size: 2rem;
       margin-bottom: 1rem;
     }
     
-    .contact-text {
-      font-size: 1.1rem;
+    .footer-text {
+      margin-bottom: 2rem;
+      opacity: 0.9;
     }
     
-    .contact-text a {
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .footer-links a {
       color: white;
       text-decoration: none;
-      border-bottom: 1px dotted rgba(255, 255, 255, 0.7);
-      transition: border-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
     }
     
-    .contact-text a:hover {
-      border-color: white;
+    .footer-links a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
     }
     
     .copyright {
       margin-top: 3rem;
       font-size: 0.9rem;
-      opacity: 0.8;
+      opacity: 0.7;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     @media (max-width: 768px) {
       .hero h1 {
-        font-size: 3rem;
+        font-size: 2.5rem;
       }
       
-      .hero .title {
-        font-size: 1.4rem;
+      .hero p {
+        font-size: 1.2rem;
       }
       
-      .timeline::after {
-        left: 31px;
+      .about-content {
+        grid-template-columns: 1fr;
       }
       
-      .timeline-item {
-        width: 100%;
-        padding-left: 70px;
-        padding-right: 25px;
-      }
-      
-      .timeline-item::after {
-        left: 21px;
-      }
-      
-      .left::after, .right::after {
-        left: 21px;
-      }
-      
-      .right {
-        left: 0;
-      }
-      
-      .skills-grid, .projects-grid {
+      .experience-grid, .education-grid, .skills-container, .projects-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -1233,98 +1582,181 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
 <body>
   <section class="hero">
     <div class="hero-content">
+      ${
+        resumeData.personalInfo.profileImage
+          ? `<img src="${resumeData.personalInfo.profileImage}" alt="${resumeData.personalInfo.name}" class="hero-image">`
+          : `<div class="hero-image" style="background-color: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">${resumeData.personalInfo.name.charAt(0)}</div>`
+      }
       <h1>${resumeData.personalInfo.name}</h1>
-      <p class="title">${resumeData.personalInfo.title}</p>
+      <p>${resumeData.personalInfo.title}</p>
+      
+      <div class="contact-links">
+        <a href="mailto:${resumeData.personalInfo.email}">
+          <span>📧</span> Email
+        </a>
+        ${
+          resumeData.personalInfo.phone
+            ? `
+        <a href="tel:${resumeData.personalInfo.phone}">
+          <span>📱</span> Phone
+        </a>
+        `
+            : ""
+        }
+        ${
+          resumeData.personalInfo.website
+            ? `
+        <a href="${resumeData.personalInfo.website}" target="_blank">
+          <span>🌐</span> Website
+        </a>
+        `
+            : ""
+        }
+      </div>
     </div>
-    <div class="scroll-down">↓</div>
   </section>
   
-  ${
-    resumeData.personalInfo.summary
-      ? `
-  <section class="about">
-    <div class="container">
-      <div class="section-title">
-        <h2>About Me</h2>
-      </div>
+  <main class="main-content">
+    ${
+      resumeData.personalInfo.summary
+        ? `
+    <section id="about" class="section">
+      <h2 class="section-title">About Me</h2>
       <div class="about-content">
-        <p>${resumeData.personalInfo.summary}</p>
+        <div>
+          <p>${resumeData.personalInfo.summary}</p>
+        </div>
+        <div class="about-image">
+          <img src="https://source.unsplash.com/random/600x400/?professional" alt="About me">
+        </div>
       </div>
-    </div>
-  </section>
-  `
-      : ""
-  }
-  
-  <section class="experience">
-    <div class="container">
-      <div class="section-title">
-        <h2>Experience</h2>
-      </div>
-      <div class="timeline">
+    </section>
+    `
+        : ""
+    }
+    
+    <section id="experience" class="section">
+      <h2 class="section-title">Experience</h2>
+      <div class="experience-grid">
         ${resumeData.experience
           .map(
-            (exp, index) => `
-        <div class="timeline-item ${index % 2 === 0 ? "left" : "right"}">
-          <div class="timeline-content">
-            <h3>${exp.position}</h3>
-            <p class="company">${exp.company}</p>
-            <p class="date">${exp.startDate} - ${exp.endDate || "Present"}</p>
-            <p>${exp.description}</p>
+            (exp) => `
+        <div class="experience-card">
+          <h3 class="card-title">${exp.position}</h3>
+          <p class="card-subtitle">${exp.company}</p>
+          <span class="card-date">${exp.startDate} - ${exp.endDate || "Present"}</span>
+          <p>${exp.description}</p>
+          ${
+            exp.highlights && exp.highlights.length > 0
+              ? `
+          <ul>
+            ${exp.highlights.map((highlight) => `<li>${highlight}</li>`).join("")}
+          </ul>
+          `
+              : ""
+          }
+        </div>
+        `,
+          )
+          .join("")}
+      </div>
+    </section>
+    
+    <section id="skills" class="section">
+      <h2 class="section-title">Skills</h2>
+      <div class="skills-container">
+        <div class="skill-category">
+          <h3>Technical Skills</h3>
+          ${resumeData.skills
+            .map(
+              (skill) => `
+          <div class="skill-item">
+            <div class="skill-name">
+              <span>${skill.name}</span>
+              ${skill.level ? `<span>${skill.level}/5</span>` : ""}
+            </div>
             ${
-              exp.highlights && exp.highlights.length > 0
+              skill.level
                 ? `
-            <ul>
-              ${exp.highlights.map((highlight) => `<li>${highlight}</li>`).join("")}
-            </ul>
+            <div class="skill-bar">
+              <div class="skill-progress" style="width: ${skill.level * 20}%;"></div>
+            </div>
             `
                 : ""
             }
           </div>
+          `,
+            )
+            .join("")}
         </div>
-        `,
-          )
-          .join("")}
+        
+        ${
+          resumeData.languages && resumeData.languages.length > 0
+            ? `
+        <div class="skill-category">
+          <h3>Languages</h3>
+          ${resumeData.languages
+            .map(
+              (lang) => `
+          <div class="skill-item">
+            <div class="skill-name">
+              <span>${lang.language}</span>
+              ${lang.proficiency ? `<span>${lang.proficiency}</span>` : ""}
+            </div>
+          </div>
+          `,
+            )
+            .join("")}
+        </div>
+        `
+            : ""
+        }
       </div>
-    </div>
-  </section>
-  
-  <section class="skills">
-    <div class="container">
-      <div class="section-title">
-        <h2>Skills</h2>
-      </div>
-      <div class="skills-grid">
-        ${resumeData.skills
+    </section>
+    
+    <section id="education" class="section">
+      <h2 class="section-title">Education</h2>
+      <div class="education-grid">
+        ${resumeData.education
           .map(
-            (skill) => `
-        <div class="skill-card">
-          <h3>${skill.name}</h3>
-          ${skill.level ? `<div class="skill-level" data-level="${skill.level}"></div>` : ""}
+            (edu) => `
+        <div class="education-card">
+          <h3 class="card-title">${edu.degree}${edu.field ? `, ${edu.field}` : ""}</h3>
+          <p class="card-subtitle">${edu.institution}</p>
+          <span class="card-date">${edu.startDate} - ${edu.endDate || "Present"}</span>
+          ${edu.description ? `<p>${edu.description}</p>` : ""}
         </div>
         `,
           )
           .join("")}
       </div>
-    </div>
-  </section>
-  
-  ${
-    resumeData.projects && resumeData.projects.length > 0
-      ? `
-  <section class="projects">
-    <div class="container">
-      <div class="section-title">
-        <h2>Projects</h2>
-      </div>
+    </section>
+    
+    ${
+      resumeData.projects && resumeData.projects.length > 0
+        ? `
+    <section id="projects" class="section">
+      <h2 class="section-title">Projects</h2>
       <div class="projects-grid">
         ${resumeData.projects
           .map(
             (project) => `
         <div class="project-card">
-          <div class="project-card-content">
-            <h3>${project.name}</h3>
+          <div class="project-image">
+            <img src="https://source.unsplash.com/random/600x400/?project" alt="${project.name}">
+          </div>
+          <div class="project-content">
+            <h3 class="project-title">${project.name}</h3>
             <p>${project.description}</p>
+            ${
+              project.highlights && project.highlights.length > 0
+                ? `
+            <div class="project-tags">
+              ${project.highlights.map((highlight) => `<span class="project-tag">${highlight}</span>`).join("")}
+            </div>
+            `
+                : ""
+            }
             ${project.url ? `<a href="${project.url}" class="project-link" target="_blank">View Project</a>` : ""}
           </div>
         </div>
@@ -1332,55 +1764,71 @@ function generateSimplePreview(resumeData: ParsedResume, config: Partial<Website
           )
           .join("")}
       </div>
-    </div>
-  </section>
-  `
-      : ""
-  }
+    </section>
+    `
+        : ""
+    }
+  </main>
   
   <footer>
-    <div class="container">
-      <div class="contact-grid">
-        <div class="contact-item">
-          <div class="contact-icon">📧</div>
-          <div class="contact-text">${resumeData.personalInfo.email}</div>
-        </div>
+    <div class="footer-content">
+      <h2 class="footer-title">Get In Touch</h2>
+      <p class="footer-text">Feel free to reach out for collaborations or just a friendly hello!</p>
+      
+      <div class="footer-links">
+        <a href="mailto:${resumeData.personalInfo.email}">
+          <span>📧</span> Email
+        </a>
         ${
           resumeData.personalInfo.phone
             ? `
-        <div class="contact-item">
-          <div class="contact-icon">📱</div>
-          <div class="contact-text">${resumeData.personalInfo.phone}</div>
-        </div>
-        `
-            : ""
-        }
-        ${
-          resumeData.personalInfo.location
-            ? `
-        <div class="contact-item">
-          <div class="contact-icon">📍</div>
-          <div class="contact-text">${resumeData.personalInfo.location}</div>
-        </div>
+        <a href="tel:${resumeData.personalInfo.phone}">
+          <span>📱</span> Phone
+        </a>
         `
             : ""
         }
         ${
           resumeData.personalInfo.website
             ? `
-        <div class="contact-item">
-          <div class="contact-icon">🌐</div>
-          <div class="contact-text"><a href="${resumeData.personalInfo.website}">${resumeData.personalInfo.website}</a></div>
-        </div>
+        <a href="${resumeData.personalInfo.website}" target="_blank">
+          <span>🌐</span> Website
+        </a>
         `
             : ""
         }
       </div>
-      <div class="copyright">
-        <p>&copy; ${new Date().getFullYear()} ${resumeData.personalInfo.name}. All rights reserved.</p>
-      </div>
+      
+      <p class="copyright">&copy; ${new Date().getFullYear()} ${resumeData.personalInfo.name}. All rights reserved.</p>
     </div>
   </footer>
+
+  <script>
+    // Reveal sections on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+      const sections = document.querySelectorAll('.section');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      sections.forEach(section => {
+        observer.observe(section);
+      });
+      
+      // Initialize skill bars
+      const skillBars = document.querySelectorAll('.skill-progress');
+      setTimeout(() => {
+        skillBars.forEach(bar => {
+          bar.style.width = bar.parentElement.getAttribute('data-width') || bar.style.width;
+        });
+      }, 500);
+    });
+  </script>
 </body>
 </html>
       `

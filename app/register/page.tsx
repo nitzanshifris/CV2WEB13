@@ -3,139 +3,153 @@
 import type React from "react"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import Link from "next/link"
+import { signUp } from "@/lib/auth"
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2 } from "lucide-react"
+import { Loader2, Mail, Lock, User } from "lucide-react"
+import { FloatLabelInput } from "@/components/float-label-input"
+import { GlassCard } from "@/components/glassmorphism/glass-card"
+import { GlassButton } from "@/components/glassmorphism/glass-button"
+import { ScrollReveal } from "@/components/scroll-reveal"
 
 export default function RegisterPage() {
   const router = useRouter()
+
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+    setError(null)
+    setSuccessMessage(null)
 
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    const confirmPassword = formData.get("confirmPassword") as string
-
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields")
-      setIsLoading(false)
-      return
-    }
-
+    // בדיקת התאמת סיסמאות
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
+      setError("הסיסמאות אינן תואמות")
       setIsLoading(false)
       return
     }
 
     try {
-      // In a real implementation, you would call your API to create a user
-      // For demo purposes, we'll simulate a successful registration
-
-      // const response = await fetch("/api/auth/register", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ name, email, password }),
-      // })
-
-      // if (!response.ok) {
-      //   const data = await response.json()
-      //   throw new Error(data.message || "Failed to register")
-      // }
-
-      // Simulate successful registration
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Sign in the user after successful registration
-      await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      })
-
-      router.push("/dashboard")
+      await signUp(email, password, name)
+      setSuccessMessage("ההרשמה הושלמה בהצלחה! אנא אמת את האימייל שלך כדי להמשיך.")
+      // לא מעבירים ישירות לדף הבית כי צריך לאמת אימייל
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred. Please try again.")
+      console.error("Registration error:", error)
+      setError("ההרשמה נכשלה. ייתכן שהאימייל כבר קיים במערכת.")
+    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-md mx-auto">
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-            <CardDescription className="text-center">Enter your information to create an account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="container flex h-screen w-screen flex-col items-center justify-center relative">
+      {/* רקע דינמי */}
+      <div className="absolute inset-0 overflow-hidden -z-10">
+        <div className="parallax-shape shape-circle bg-primary/5 w-96 h-96 -top-48 -right-48 absolute"></div>
+        <div className="parallax-shape shape-circle bg-secondary/5 w-80 h-80 -bottom-40 -left-40 absolute"></div>
+      </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" name="name" placeholder="John Doe" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" placeholder="name@example.com" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" name="confirmPassword" type="password" required />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create Account"
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+        <ScrollReveal>
+          <GlassCard className="border-none" depth={3}>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">הרשמה</CardTitle>
+              <CardDescription className="text-center">צור חשבון חדש כדי להתחיל</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-6">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-              </Button>
+                {successMessage && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-4">
+                  <FloatLabelInput
+                    id="name"
+                    label="שם מלא"
+                    icon={<User className="h-4 w-4" />}
+                    variant="glass"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <FloatLabelInput
+                    id="email"
+                    type="email"
+                    label="אימייל"
+                    icon={<Mail className="h-4 w-4" />}
+                    variant="glass"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <FloatLabelInput
+                    id="password"
+                    type="password"
+                    label="סיסמה"
+                    icon={<Lock className="h-4 w-4" />}
+                    variant="glass"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <FloatLabelInput
+                    id="confirmPassword"
+                    type="password"
+                    label="אימות סיסמה"
+                    icon={<Lock className="h-4 w-4" />}
+                    variant="glass"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4">
+                <GlassButton type="submit" className="w-full" disabled={isLoading || !!successMessage}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      נרשם...
+                    </>
+                  ) : (
+                    "הירשם"
+                  )}
+                </GlassButton>
+                <div className="text-center text-sm">
+                  כבר יש לך חשבון?{" "}
+                  <Link href="/login" className="text-primary hover:underline">
+                    התחבר
+                  </Link>
+                </div>
+              </CardFooter>
             </form>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline">
-                Sign in
-              </Link>
-            </div>
-            <div className="text-center text-xs text-muted-foreground">
-              By creating an account, you agree to our{" "}
-              <Link href="/terms" className="hover:underline">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="hover:underline">
-                Privacy Policy
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </div>
   )

@@ -1,183 +1,120 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link"
+import { signIn } from "@/lib/auth"
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Github, Loader2, Mail } from "lucide-react"
+import { Loader2, Mail, Lock } from "lucide-react"
+import { FloatLabelInput } from "@/components/float-label-input"
+import { GlassCard } from "@/components/glassmorphism/glass-card"
+import { GlassButton } from "@/components/glassmorphism/glass-button"
+import { ScrollReveal } from "@/components/scroll-reveal"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard"
-  const errorType = searchParams?.get("error")
 
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [formError, setFormError] = useState("")
 
-  // Handle error messages from URL parameters
-  let errorMessage = ""
-  if (errorType) {
-    switch (errorType) {
-      case "CredentialsSignin":
-        errorMessage = "אימייל או סיסמה לא תקינים"
-        break
-      case "OAuthSignin":
-      case "OAuthCallback":
-        errorMessage = "שגיאה בכניסה עם ספק OAuth"
-        break
-      default:
-        errorMessage = "אירעה שגיאה במהלך הכניסה"
-    }
-  }
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    setFormError("")
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email")
-    const password = formData.get("password")
-
-    if (!email || !password) {
-      setFormError("נא להזין אימייל וסיסמה")
-      setIsLoading(false)
-      return
-    }
+    setError(null)
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      })
-
-      if (result?.error) {
-        setFormError("אימייל או סיסמה לא תקינים")
-        setIsLoading(false)
-        return
-      }
-
-      // Successful login
+      await signIn(email, password)
       router.push(callbackUrl)
     } catch (error) {
       console.error("Login error:", error)
-      setFormError("אירעה שגיאה. נסה שוב.")
+      setError("התחברות נכשלה. אנא בדוק את האימייל והסיסמה שלך.")
+    } finally {
       setIsLoading(false)
     }
   }
 
-  const handleOAuthSignIn = (provider) => {
-    setIsLoading(true)
-    // Use redirect flow for OAuth to avoid client-side errors
-    signIn(provider, { callbackUrl })
-  }
-
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-md mx-auto">
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">התחברות לחשבון שלך</CardTitle>
-            <CardDescription className="text-center">הזן את האימייל והסיסמה שלך כדי להתחבר לחשבון שלך</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(errorMessage || formError) && (
-              <Alert variant="destructive">
-                <AlertDescription>{formError || errorMessage}</AlertDescription>
-              </Alert>
-            )}
+    <div className="container flex h-screen w-screen flex-col items-center justify-center relative">
+      {/* רקע דינמי */}
+      <div className="absolute inset-0 overflow-hidden -z-10">
+        <div className="parallax-shape shape-circle bg-primary/5 w-96 h-96 -top-48 -left-48 absolute"></div>
+        <div className="parallax-shape shape-square bg-secondary/5 w-80 h-80 -bottom-40 -right-40 absolute rotate-12"></div>
+      </div>
 
-            <Tabs defaultValue="credentials" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="credentials">אימייל</TabsTrigger>
-                <TabsTrigger value="oauth">OAuth</TabsTrigger>
-              </TabsList>
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+        <ScrollReveal>
+          <GlassCard className="border-none" depth={3}>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">התחברות</CardTitle>
+              <CardDescription className="text-center">הזן את פרטי ההתחברות שלך להמשך</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-6">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-              <TabsContent value="credentials">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">אימייל</Label>
-                    <Input id="email" name="email" type="email" placeholder="name@example.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">סיסמה</Label>
-                      <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                        שכחת סיסמה?
-                      </Link>
-                    </div>
-                    <Input id="password" name="password" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        מתחבר...
-                      </>
-                    ) : (
-                      "התחבר"
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="oauth">
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleOAuthSignIn("google")}
-                    disabled={isLoading}
-                  >
-                    <Mail className="mr-2 h-4 w-4" />
-                    התחבר עם Google
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleOAuthSignIn("github")}
-                    disabled={isLoading}
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    התחבר עם GitHub
-                  </Button>
-                  {isLoading && (
-                    <div className="text-center text-sm text-muted-foreground">
-                      <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                      מתחבר לספק...
-                    </div>
-                  )}
+                <div className="space-y-4">
+                  <FloatLabelInput
+                    id="email"
+                    type="email"
+                    label="אימייל"
+                    icon={<Mail className="h-4 w-4" />}
+                    variant="glass"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm">
-              אין לך חשבון?{" "}
-              <Link href="/register" className="text-primary hover:underline">
-                הירשם
-              </Link>
-            </div>
-            <div className="text-center text-xs text-muted-foreground">
-              בהתחברות, אתה מסכים ל{" "}
-              <Link href="/terms" className="hover:underline">
-                תנאי השירות
-              </Link>{" "}
-              ו{" "}
-              <Link href="/privacy" className="hover:underline">
-                מדיניות הפרטיות
-              </Link>
-            </div>
-          </CardFooter>
-        </Card>
+
+                <div className="space-y-2">
+                  <FloatLabelInput
+                    id="password"
+                    type="password"
+                    label="סיסמה"
+                    icon={<Lock className="h-4 w-4" />}
+                    variant="glass"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <div className="flex justify-end">
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                      שכחת סיסמה?
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4">
+                <GlassButton type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      מתחבר...
+                    </>
+                  ) : (
+                    "התחבר"
+                  )}
+                </GlassButton>
+                <div className="text-center text-sm">
+                  אין לך חשבון?{" "}
+                  <Link href="/register" className="text-primary hover:underline">
+                    הירשם
+                  </Link>
+                </div>
+              </CardFooter>
+            </form>
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </div>
   )

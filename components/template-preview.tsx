@@ -31,6 +31,9 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
   // Simulate loading different sections for a more responsive feel
   const [loadedSections, setLoadedSections] = useState<string[]>(["about"])
 
+  // הוספת אנימציות לתצוגת התבנית
+
+  // הוספת אנימציות לטעינת סקציות
   useEffect(() => {
     const sections = ["experience", "education", "skills", "projects"]
     let index = 0
@@ -72,7 +75,8 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
       <div className="bg-background min-h-[600px] w-full overflow-y-auto rounded-md shadow-sm border">
         <div className="p-8 max-w-4xl mx-auto">
           {/* Header */}
-          <div className="mb-12 text-center">
+          {/* הוספת מחלקות אנימציה לאלמנטים */}
+          <div className="mb-12 text-center animate-fade-in">
             <h1 className="text-3xl font-bold mb-2">{currentData.personalInfo.name}</h1>
             <p className="text-xl text-muted-foreground mb-4">{currentData.personalInfo.title}</p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">
@@ -112,8 +116,9 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
           )}
 
           {/* Experience */}
+          {/* הוספת אנימציות לסקציות שנטענות */}
           {loadedSections.includes("experience") && currentData.experience.length > 0 && (
-            <div className="mb-10">
+            <div className="mb-10 animate-slide-in-up delay-1">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Experience</h2>
               <div className="space-y-6">
                 {currentData.experience.map((exp, index) => (
@@ -144,7 +149,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
 
           {/* Education */}
           {loadedSections.includes("education") && currentData.education.length > 0 && (
-            <div className="mb-10">
+            <div className="mb-10 animate-slide-in-up delay-2">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Education</h2>
               <div className="space-y-6">
                 {currentData.education.map((edu, index) => (
@@ -171,7 +176,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
 
           {/* Skills */}
           {loadedSections.includes("skills") && currentData.skills.length > 0 && (
-            <div className="mb-10">
+            <div className="mb-10 animate-slide-in-up delay-3">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Skills</h2>
               <div className="grid grid-cols-2 gap-4">
                 {currentData.skills.map((skill, index) => (
@@ -189,7 +194,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
 
           {/* Projects */}
           {loadedSections.includes("projects") && currentData.projects && currentData.projects.length > 0 && (
-            <div className="mb-10">
+            <div className="mb-10 animate-slide-in-up delay-4">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Projects</h2>
               <div className="space-y-6">
                 {currentData.projects.map((project, index) => (
@@ -216,7 +221,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
 
           {/* Languages */}
           {loadedSections.includes("skills") && currentData.languages && currentData.languages.length > 0 && (
-            <div className="mb-10">
+            <div className="mb-10 animate-slide-in-up delay-5">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Languages</h2>
               <div className="flex flex-wrap gap-4">
                 {currentData.languages.map((lang, index) => (
@@ -230,7 +235,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
 
           {/* Certifications */}
           {loadedSections.includes("skills") && currentData.certifications && currentData.certifications.length > 0 && (
-            <div>
+            <div className="animate-slide-in-up delay-6">
               <h2 className="text-xl font-semibold mb-3 border-b pb-2">Certifications</h2>
               <div className="space-y-4">
                 {currentData.certifications.map((cert, index) => (
@@ -536,6 +541,7 @@ export function TemplatePreview({ resumeData, templateId, onEdit, onDataChange }
               {loadedSections.includes("experience") && currentData.experience.length > 0 ? (
                 <div className="space-y-8">
                   {currentData.experience.map((exp, index) => (
+                    // שיפור כרטיסי GlassCard בתבנית Creative
                     <GlassCard key={index} className="relative overflow-hidden" color="blue" depth={2}>
                       <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
                       <div className="pl-4">

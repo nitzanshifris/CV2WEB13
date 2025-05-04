@@ -1,48 +1,57 @@
 import { NextResponse } from "next/server"
-import { getToken } from "next-auth/jwt"
 import type { NextRequest } from "next/server"
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
+import { getToken } from "next-auth/jwt"
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+// רשימת נתיבים מוגנים
+const protectedPaths = ["/dashboard", "/profile", "/upload", "/website"]
 
-  // Check if the path is a protected route
-  const isProtectedRoute = ["/dashboard", "/upload", "/profile", "/settings"].some((route) =>
-    pathname.startsWith(route),
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const path = req.nextUrl.pathname
+
+  // יצירת לקוח Supabase למידלוור
+  // בדיקה אם הנתיב מוגן
+  const isProtectedPath = protectedPaths.some(
+    (protectedPath) => path === protectedPath || path.startsWith(`${protectedPath}/`),
   )
 
-  try {
-    // Check if the user is authenticated
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    })
+  if (isProtectedPath) {
+    // Try NextAuth first
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 
-    const isAuthenticated = !!token
+    if (token) {
+      return res
+    }
 
-    // Redirect unauthenticated users to the login page
-    if (isProtectedRoute && !isAuthenticated) {
-      const url = new URL("/login", request.url)
-      url.searchParams.set("callbackUrl", encodeURI(pathname))
+    // If no NextAuth token, try Supabase
+    const supabase = createMiddlewareClient({ req, res })
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    // אם אין סשן תקף, הפנה להתחברות
+    if (!session) {
+      const url = new URL("/login", req.url)
+      url.searchParams.set("callbackUrl", path)
       return NextResponse.redirect(url)
-    }
-
-    // Redirect authenticated users from auth pages
-    if ((pathname === "/login" || pathname === "/register") && isAuthenticated) {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
-    }
-  } catch (error) {
-    console.error("Auth middleware error:", error)
-
-    // In case of auth error on protected routes, redirect to login
-    if (isProtectedRoute) {
-      return NextResponse.redirect(new URL("/login", request.url))
     }
   }
 
-  return NextResponse.next()
+  return res
 }
 
-// Configure paths to match
+// Add config to specify which paths the middleware should run on
 export const config = {
-  matcher: ["/dashboard/:path*", "/upload/:path*", "/profile/:path*", "/settings/:path*", "/login", "/register"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     * - api/auth (NextAuth API routes)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public|api/auth).*)",
+  ],
 }

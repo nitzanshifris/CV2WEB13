@@ -113,9 +113,10 @@ export function WebsiteCustomizer({ resumeData, initialConfig, onConfigChange }:
                   className={`cursor-pointer rounded-md overflow-hidden border-2 transition-all ${
                     config.colorScheme === scheme.id
                       ? "border-primary scale-105"
-                      : "border-transparent hover:border-muted"
+                      : "border-transparent hover:border-muted hover:scale-102"
                   }`}
                   onClick={() => handleConfigChange("colorScheme", scheme.id)}
+                  style={{ transitionDuration: "0.3s", transitionTimingFunction: "var(--animation-smooth)" }}
                 >
                   <div
                     className="h-20"
@@ -135,9 +136,12 @@ export function WebsiteCustomizer({ resumeData, initialConfig, onConfigChange }:
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div
                 className={`cursor-pointer rounded-md overflow-hidden border-2 transition-all ${
-                  config.template === "minimal" ? "border-primary scale-105" : "border-transparent hover:border-muted"
+                  config.template === "minimal"
+                    ? "border-primary scale-105"
+                    : "border-transparent hover:border-muted hover:scale-102"
                 }`}
                 onClick={() => handleConfigChange("template", "minimal")}
+                style={{ transitionDuration: "0.3s", transitionTimingFunction: "var(--animation-smooth)" }}
               >
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <div className="w-3/4 h-3/4 bg-background rounded-md p-2">

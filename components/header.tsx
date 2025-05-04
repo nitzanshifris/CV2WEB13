@@ -8,7 +8,7 @@ import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
 import { useState, useEffect } from "react"
 
-export default function Header() {
+export function Header() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -35,7 +35,7 @@ export default function Header() {
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-background"
+        scrolled ? "bg-background/80 backdrop-filter backdrop-blur-md shadow-sm" : "bg-background"
       }`}
     >
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -89,8 +89,9 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-              Sign In
+            <Button variant="ghost" size="sm" className="hidden md:inline-flex relative overflow-hidden group">
+              <span className="relative z-10">Sign In</span>
+              <span className="absolute inset-0 bg-primary/10 transform scale-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-100"></span>
             </Button>
           </Link>
           <Link href="/register">

@@ -1,10 +1,8 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import GoogleProvider from "next-auth/providers/google"
-import GithubProvider from "next-auth/providers/github"
 
-// Simplified auth options to avoid potential issues
-const authOptions = {
+// Improved configuration with proper error handling
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -13,37 +11,51 @@ const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Simple mock user for demonstration
-        if (credentials?.email === "user@example.com" && credentials?.password === "password123") {
-          return {
-            id: "1",
-            name: "Demo User",
-            email: "user@example.com",
-          }
+        if (!credentials?.email || !credentials?.password) {
+          return null
         }
-        return null
+
+        try {
+          // For demo purposes
+          if (credentials.email === "user@example.com" && credentials.password === "password123") {
+            return {
+              id: "1",
+              name: "Demo User",
+              email: "user@example.com",
+            }
+          }
+
+          // Attempt to sign in with Supabase
+          // This is commented out to avoid dependency on Supabase being properly configured
+          // Uncomment when Supabase is properly set up
+          /*
+          const data = await signIn(credentials.email, credentials.password)
+          if (data.session) {
+            return {
+              id: data.user.id,
+              name: data.user.user_metadata?.name || data.user.email,
+              email: data.user.email,
+            }
+          }
+          */
+
+          return null
+        } catch (error) {
+          console.error("Auth error:", error)
+          return null
+        }
       },
     }),
-    // Only add OAuth providers if environment variables are available
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ? [
-          GithubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          }),
-        ]
-      : []),
   ],
   pages: {
     signIn: "/login",
+    error: "/auth-error",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -54,16 +66,11 @@ const authOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub
+        session.user.id = token.id as string
       }
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
-}
+})
 
-// Create handler with NextAuth
-const handler = NextAuth(authOptions)
-
-// Export the handler for App Router
 export { handler as GET, handler as POST }

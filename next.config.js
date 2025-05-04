@@ -2,11 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["localhost", "res.cloudinary.com", "images.unsplash.com", "example.com"],
+    domains: ["localhost", "res.cloudinary.com", "images.unsplash.com"],
     unoptimized: true,
-  },
-  experimental: {
-    serverActions: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
