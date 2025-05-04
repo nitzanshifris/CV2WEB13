@@ -62,8 +62,20 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
 export function useSupabase() {
   const context = useContext(SupabaseContext)
+
+  // Handle the case where it's called outside of a provider during SSR/SSG
+  if (typeof window === "undefined" && context === undefined) {
+    // Return a default value for SSR/SSG
+    return {
+      supabase: null as any,
+      user: null,
+      isLoading: true,
+    }
+  }
+
   if (context === undefined) {
     throw new Error("useSupabase must be used within a SupabaseProvider")
   }
+
   return context
 }

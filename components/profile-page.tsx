@@ -1,8 +1,5 @@
 "use client"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -27,7 +24,7 @@ import { RevealOnScroll } from "@/components/parallax-effect"
 import { supabase } from "@/lib/supabase"
 import { ProfileImageUploader } from "@/components/profile-image-uploader"
 
-function ProfilePageContent() {
+export default function ProfilePage() {
   const router = useRouter()
   const { user, isLoading: isSessionLoading } = useSupabase()
 
@@ -336,8 +333,4 @@ function ProfilePageContent() {
       </div>
     </div>
   )
-}
-
-export default function Page() {
-  return <ProfilePageContent />
 }
